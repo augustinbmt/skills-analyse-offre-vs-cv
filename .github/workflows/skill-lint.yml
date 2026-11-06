@@ -1,0 +1,29 @@
+name: Lint des skills
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/**/skills/**'
+      - '.claude-plugin/**'
+      - 'bin/skill-lint'
+  pull_request:
+    paths:
+      - 'plugins/**/skills/**'
+      - '.claude-plugin/**'
+      - 'bin/skill-lint'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier les fichiers JSON
+        run: |
+          for f in .claude-plugin/*.json plugins/*/.claude-plugin/plugin.json; do
+            python3 -m json.tool "$f" > /dev/null && echo "OK $f"
+          done
+
+      - name: Lancer skill-lint
+        run: ./bin/skill-lint plugins

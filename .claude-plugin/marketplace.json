@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "augustin-skills",
+  "description": "Skills Claude orientés carrière et recherche d'emploi — chacun produit un livrable concret",
+  "owner": {
+    "name": "Augustin Beaumont",
+    "url": "https://github.com/augustinbmt"
+  },
+  "plugins": [
+    {
+      "name": "carriere",
+      "description": "Analyse d'une offre d'emploi face à un CV : résumé des prérequis, tableau comparatif et plan pour combler les manques.",
+      "source": "./plugins/carriere",
+      "category": "productivity"
+    }
+  ]
+}

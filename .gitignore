@@ -1,0 +1,32 @@
+# Environnement
+.env
+.env.local
+*.key
+*.pem
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Logs et temporaires
+*.log
+*.tmp
+.cache/
+
+# OS
+Thumbs.db
+
+# Réglages locaux Claude Code
+.claude/settings.local.json
+SESSION.md
+
+# Skills empaquetés
+*.skill
+*.zip
+
+# Données personnelles : ne jamais commiter de CV
+*.pdf
+*.docx

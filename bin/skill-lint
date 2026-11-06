@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# skill-lint — vérifie la structure des SKILL.md
+# Usage : skill-lint [chemin...]
+#   chemin : dossier(s) de skill, fichier(s) SKILL.md ou dossier parent.
+#   Sans argument : tous les SKILL.md sous le dossier courant.
+# Code de sortie : 0 si tout passe, 1 sinon.
+
+set -euo pipefail
+
+MAX_LINES=500
+MAX_NAME=64
+MAX_DESC=1024
+ERRORS=0
+WARNINGS=0
+
+red()    { printf '\033[0;31m%s\033[0m\n' "$1"; }
+yellow() { printf '\033[0;33m%s\033[0m\n' "$1"; }
+green()  { printf '\033[0;32m%s\033[0m\n' "$1"; }
+dim()    { printf '\033[0;90m%s\033[0m\n' "$1"; }
+
+error() { red    "  ERREUR : $1"; ERRORS=$((ERRORS + 1)); }
+warn()  { yellow "  ALERTE : $1"; WARNINGS=$((WARNINGS + 1)); }
+pass()  { dim    "  OK     : $1"; }
+
+lint_skill() {
+  local skill_md="$1"
+  local skill_dir skill_name
+  skill_dir=$(dirname "$skill_md")
+  skill_name=$(basename "$skill_dir")
+
+  echo ""
+  echo "Analyse : $skill_md"
+
+  if [ ! -s "$skill_md" ]; then error "SKILL.md est vide"; return; fi
+
+  if [ "$(head -1 "$skill_md")" != "---" ]; then
+    error "Frontmatter absent : la première ligne doit être '---'"; return
+  fi
+
+  local fm_end
+  fm_end=$(tail -n +2 "$skill_md" | grep -n '^---$' | head -1 | cut -d: -f1 || true)
+  if [ -z "$fm_end" ]; then error "Frontmatter jamais refermé par '---'"; return; fi
+  pass "frontmatter valide"
+
+  local fm
+  fm=$(sed -n "2,${fm_end}p" "$skill_md")
+
+  # name
+  local name
+  name=$(echo "$fm" | grep -E '^name:' | sed 's/^name:[[:space:]]*//' | tr -d "\"'" || true)
+  if [ -z "$name" ]; then
+    error "champ 'name' absent ou vide"
+  else
+    [ "$name" = "$skill_name" ] && pass "name identique au dossier" \
+      || warn "name '$name' différent du dossier '$skill_name'"
+    echo "$name" | grep -qE '^[a-z0-9]+(-[a-z0-9]+)*$' && pass "name en kebab-case" \
+      || error "name '$name' n'est pas en kebab-case"
+    [ "${#name}" -le "$MAX_NAME" ] || error "name dépasse $MAX_NAME caractères"
+  fi
+
+  # description
+  local desc
+  desc=$(echo "$fm" | grep -E '^description:' | sed 's/^description:[[:space:]]*//' || true)
+  if [ -z "$desc" ]; then
+    error "champ 'description' absent ou vide"
+  else
+    pass "description présente"
+    local desc_len
+    desc_len=$(printf '%s' "$desc" | wc -m | tr -d '[:space:]')
+    [ "$desc_len" -le "$MAX_DESC" ] && pass "description : $desc_len caractères (max $MAX_DESC)" \
+      || error "description : $desc_len caractères (max $MAX_DESC)"
+    if echo "$desc" | grep -q '[<>]'; then error "description contient des chevrons < ou >"; fi
+  fi
+
+  # longueur
+  local lines
+  lines=$(wc -l < "$skill_md" | tr -d '[:space:]')
+  [ "$lines" -le "$MAX_LINES" ] && pass "$lines lignes (max $MAX_LINES)" \
+    || error "$lines lignes (max $MAX_LINES)"
+
+  # corps non vide
+  local body
+  body=$(tail -n +"$((fm_end + 2))" "$skill_md" | tr -d '[:space:]')
+  [ -n "$body" ] && pass "corps présent" || warn "aucun contenu après le frontmatter"
+
+  # références vers des fichiers inexistants
+  local refs
+  refs=$(grep -oE '\./(references|assets|scripts)/[^ )"`]+' "$skill_md" || true)
+  while IFS= read -r ref; do
+    [ -z "$ref" ] && continue
+    [ -e "$skill_dir/$ref" ] && pass "référence '$ref' trouvée" \
+      || error "référence '$ref' introuvable"
+  done <<< "$refs"
+
+  # dossiers non standard
+  local sub
+  while IFS= read -r sub; do
+    [ -z "$sub" ] && continue
+    warn "dossier non standard : $(basename "$sub")/ (attendu : references/, assets/, scripts/, templates/, examples/)"
+  done < <(find "$skill_dir" -mindepth 1 -maxdepth 1 -type d \
+             ! -name references ! -name assets ! -name scripts ! -name templates ! -name examples)
+}
+
+echo "skill-lint — vérification des skills Claude"
+echo "==========================================="
+
+FILES=()
+if [ $# -eq 0 ]; then
+  while IFS= read -r f; do FILES+=("$f"); done < <(find . -name SKILL.md -type f -not -path './.git/*' | sort)
+else
+  for arg in "$@"; do
+    if [ -f "$arg" ] && [ "$(basename "$arg")" = "SKILL.md" ]; then
+      FILES+=("$arg")
+    elif [ -d "$arg" ]; then
+      while IFS= read -r f; do FILES+=("$f"); done < <(find "$arg" -name SKILL.md -type f | sort)
+    else
+      red "Ni un dossier ni un SKILL.md : $arg"; ERRORS=$((ERRORS + 1))
+    fi
+  done
+fi
+
+if [ ${#FILES[@]} -eq 0 ]; then yellow "Aucun SKILL.md trouvé."; exit 0; fi
+
+for f in "${FILES[@]}"; do lint_skill "$f"; done
+
+echo ""
+echo "${#FILES[@]} skill(s) vérifié(s) : $ERRORS erreur(s), $WARNINGS alerte(s)"
+if [ "$ERRORS" -gt 0 ]; then red "ÉCHEC"; exit 1; fi
+green "SUCCÈS"

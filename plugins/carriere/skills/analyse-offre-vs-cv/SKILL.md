@@ -1,6 +1,7 @@
 ---
 name: analyse-offre-vs-cv
-description: Résume les prérequis d'une offre d'emploi (URL ou texte), la compare au CV de l'utilisateur et propose des solutions concrètes pour combler les manques.
+description: Résume les prérequis d'une offre d'emploi (URL ou texte collé), la compare au CV de l'utilisateur dans un tableau couvert/partiel/manquant et propose un plan concret pour combler les écarts avant la date limite. Utiliser dès que l'utilisateur partage une offre (V.I.E, CDI, stage, alternance, LinkedIn, Welcome to the Jungle, Indeed, Business France) avec son CV, ou demande « est-ce que je corresponds à ce poste », « compare mon CV à cette offre », « qu'est-ce qui me manque », « mes chances pour ce job », même sans dire « analyse ».
+license: MIT
 ---
 
 # Analyse offre d'emploi vs CV

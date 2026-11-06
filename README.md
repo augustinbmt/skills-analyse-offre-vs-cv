@@ -1,30 +1,62 @@
-# skills-analyse-offre-vs-cv
+# Skills Claude — Analyse offre vs CV
 
-Skill Claude qui analyse une offre d'emploi par rapport à un CV.
+Skills Claude orientés carrière et recherche d'emploi. Chaque skill guide Claude à travers une méthode qui produit un livrable concret : une analyse, un comparatif, un plan d'action.
 
-À partir d'un lien d'offre (ou de son texte) et d'un CV (PDF ou DOCX), le skill :
+## Démarrage rapide
 
-1. **résume l'offre** : poste, lieu, contrat, rémunération, missions, prérequis et date limite de candidature ;
-2. **compare les prérequis au CV** dans un tableau (✅ couvert, 🟡 partiel, 🟠 insuffisant, 🔴 absent) ;
-3. **propose des solutions** pour combler les manques, à trois échéances : avant la date limite, à moyen terme, et pistes alternatives.
+```bash
+# Ajouter le marketplace (une seule fois)
+/plugin marketplace add GITHUB_USER/skills-analyse-offre-vs-cv
 
-Il gère les sites d'offres qui se chargent en JavaScript (Business France V.I.E, Welcome to the Jungle, LinkedIn…) en passant par le navigateur quand une simple récupération de la page ne suffit pas.
-
-## Contenu
-
-```
-analyse-offre-vs-cv/
-└── SKILL.md   # instructions du skill
+# Installer le plugin
+/plugin install carriere@augustin-skills
 ```
 
-## Installation
+Ensuite, il suffit de demander à Claude : les skills installés se déclenchent automatiquement à partir du langage naturel. Tu peux aussi les appeler par leur commande slash.
 
-**Claude (claude.ai / app)** : Paramètres → Capacités → Skills → importer le dossier `analyse-offre-vs-cv` (zippé).
+## Plugins
 
-**Claude Code** : copier le dossier dans `~/.claude/skills/` (ou `.claude/skills/` à la racine d'un projet).
+### Carrière
 
-## Utilisation
+| Plugin | Skills | Ce qu'il fait |
+|---|---|---|
+| carriere | analyse-offre-vs-cv | Résume les prérequis d'une offre d'emploi, les compare au CV dans un tableau ✅/🟡/🟠/🔴 et propose un plan pour combler les manques avant la date limite |
 
-Envoyer à Claude le CV et le lien de l'offre, par exemple :
+## Skills
 
-> Voici mon CV et l'offre https://mon-vie-via.businessfrance.fr/offres/XXXXXX : résume les prérequis, compare avec mon profil et dis-moi comment combler les manques.
+### analyse-offre-vs-cv
+
+**Entrées** : le lien d'une offre (Business France V.I.E, LinkedIn, Welcome to the Jungle, Indeed…) ou son texte, et un CV en PDF ou DOCX.
+
+**Sortie** :
+1. **L'offre en bref** : poste, lieu, contrat, rémunération, date limite et jours restants, missions, prérequis (obligatoires ou souhaités).
+2. **Comparatif** : tableau prérequis / profil / niveau, avec des preuves tirées du CV et un verdict honnête.
+3. **Comment combler les manques** : actions faisables avant la date limite, montée en compétences à moyen terme, pistes alternatives.
+
+**Phrases qui le déclenchent** : « compare mon CV à cette offre », « est-ce que je corresponds à ce poste ? », « qu'est-ce qui me manque pour ce job ? »
+
+**Commande** : `/analyse-offre-vs-cv https://… ./mon-cv.pdf`
+
+Les sites qui se chargent en JavaScript sont lus via le navigateur quand une simple récupération de la page ne suffit pas.
+
+## Autres installations
+
+**Claude Code, sans marketplace** : copier `plugins/carriere/skills/analyse-offre-vs-cv/` dans `~/.claude/skills/`, ou charger le plugin en local avec `claude --plugin-dir ./plugins/carriere`.
+
+**Claude (claude.ai / app)** : zipper le dossier `analyse-offre-vs-cv` et l'importer dans Paramètres → Capacités → Skills.
+
+## Philosophie
+
+**Chaque skill produit quelque chose.** Pas de fiches de connaissances : uniquement des méthodes de travail qui aboutissent à un livrable.
+
+**Transmettre une méthode, pas des scripts.** Les skills décrivent quoi faire ; Claude adapte l'exécution à ton environnement.
+
+## Créer son propre skill
+
+Utilise le [skill-creator officiel d'Anthropic](https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md) ou demande à Claude : « Crée un nouveau skill pour [cas d'usage] ».
+
+Voir [SKILL_SHAPE.md](SKILL_SHAPE.md) pour la forme attendue d'un skill et [CLAUDE.md](CLAUDE.md) pour les conventions du dépôt. Avant de commiter, lance `./bin/skill-lint`.
+
+## Licence
+
+MIT
