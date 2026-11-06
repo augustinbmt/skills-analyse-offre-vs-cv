@@ -26,7 +26,9 @@ Ensuite, il suffit de demander à Claude : les skills installés se déclenchent
 
 ### analyse-offre-vs-cv
 
-**Entrées** : le lien d'une offre (Business France V.I.E, LinkedIn, Welcome to the Jungle, Indeed…) ou son texte, et un CV en PDF ou DOCX.
+**Entrées** : le lien d'une offre (Business France V.I.E, LinkedIn, Welcome to the Jungle, Indeed…) ou son texte, et **ton** CV en PDF, en DOCX ou en texte collé.
+
+Le skill marche pour n'importe quel métier et ne présuppose aucun profil. Si tu ne donnes pas ton CV, Claude te le demande avant de commencer. Si un CV a déjà été utilisé dans la conversation, il te demande s'il faut le reprendre ou en prendre un autre : tu peux changer de CV (version mise à jour, autre métier visé) à tout moment.
 
 **Sortie** :
 1. **L'offre en bref** : poste, lieu, contrat, rémunération, date limite et jours restants, missions, prérequis (obligatoires ou souhaités).
@@ -35,7 +37,7 @@ Ensuite, il suffit de demander à Claude : les skills installés se déclenchent
 
 **Phrases qui le déclenchent** : « compare mon CV à cette offre », « est-ce que je corresponds à ce poste ? », « qu'est-ce qui me manque pour ce job ? »
 
-**Commande** : `/analyse-offre-vs-cv https://… ./mon-cv.pdf`
+**Commande** : `/analyse-offre-vs-cv https://… ./mon-cv.pdf`. Sans le chemin du CV, Claude te le demande.
 
 Les sites qui se chargent en JavaScript sont lus via le navigateur quand une simple récupération de la page ne suffit pas.
 

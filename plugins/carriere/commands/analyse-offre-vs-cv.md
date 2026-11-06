@@ -9,4 +9,4 @@ Lis $ARGUMENTS :
 - une URL → l'offre à analyser
 - un chemin de fichier (.pdf, .docx) → le CV
 
-Si l'offre ou le CV manque, le demander à l'utilisateur avant de commencer.
+Sans CV dans les arguments, suivre l'étape 0 du skill : demander d'abord le CV de l'utilisateur (fichier joint, chemin ou texte collé). Si l'offre manque aussi, la demander dans le même message.
