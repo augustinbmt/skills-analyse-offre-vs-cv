@@ -6,7 +6,8 @@ Points d'éligibilité à signaler selon le contrat de l'offre. Ces règles chan
 
 Source officielle : https://mon-vie-via.businessfrance.fr
 
-- Âge : de 18 à 28 ans, départ au plus tard la veille des 29 ans.
+- Âge : entre 18 et 28 ans au moment de la candidature ; départ en mission au plus tard le jour du 29e anniversaire. Le CV indique rarement l'âge : demander au candidat de le vérifier.
+- Ne jamais avoir déjà effectué de volontariat international (V.I.E ou V.I.A).
 - Nationalité française ou d'un pays de l'Espace économique européen.
 - Journée défense et citoyenneté (JDC) effectuée, pour les Français.
 - Casier judiciaire compatible.

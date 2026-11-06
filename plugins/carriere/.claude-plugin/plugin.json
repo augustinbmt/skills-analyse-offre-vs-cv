@@ -1,6 +1,6 @@
 {
   "name": "carriere",
-  "description": "Analyse d'une offre d'emploi face à un CV : résumé des prérequis, tableau comparatif et plan pour combler les manques.",
+  "description": "Analyse d'une offre d'emploi face à un CV (prérequis, score pondéré, plan pour combler les manques) et lettre de motivation personnalisée.",
   "author": {
     "name": "Augustin Beaumont",
     "url": "https://github.com/augustinbmt"

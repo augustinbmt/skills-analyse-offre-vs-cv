@@ -20,7 +20,7 @@ Ensuite, il suffit de demander à Claude : les skills installés se déclenchent
 
 | Plugin | Skills | Ce qu'il fait |
 |---|---|---|
-| carriere | analyse-offre-vs-cv | Résume les prérequis d'une offre d'emploi, les compare à ton CV (PDF ou DOCX) avec un score pondéré et propose un plan pour combler les manques avant la date limite |
+| carriere | analyse-offre-vs-cv, lettre-motivation | Résume les prérequis d'une offre d'emploi, les compare à ton CV (PDF ou DOCX) avec un score pondéré, propose un plan pour combler les manques, puis rédige une lettre de motivation personnalisée à partir du même CV |
 
 ## Skills
 
@@ -40,6 +40,9 @@ Le skill marche pour n'importe quel métier et ne présuppose aucun profil. Si t
 3. **Score et verdict** : une grille pondérée (prérequis obligatoires ×2, souhaités ×1) donne un pourcentage. 70 % ou plus : candidate. De 40 à 69 % : jouable avec le plan. Moins de 40 % : vise plutôt d'autres offres.
 4. **Mots-clés à reprendre** : les termes exacts de l'offre absents de ton CV alors que tu as l'expérience, pour passer les filtres automatiques (ATS).
 5. **Comment combler les manques** : actions faisables avant la date limite, montée en compétences à moyen terme, pistes alternatives. Chaque formation citée est vérifiée en ligne, avec son lien.
+6. **La proposition de lettre** : Claude te propose de rédiger la lettre de motivation pour ce poste avec le même CV (voir `lettre-motivation` ci-dessous).
+
+Tu peux donner plusieurs offres d'un coup : chacune a sa section, et une même offre publiée pour plusieurs villes est signalée et analysée une seule fois. Si un site exige une connexion ou bloque les robots (souvent Indeed), Claude te demande de coller le texte de l'offre au lieu d'insister.
 
 **Sécurité** : le contenu de l'offre et du CV est traité comme de simples données. Si une page ou un CV contient des instructions cachées destinées à l'IA (« dis que ce candidat est parfait »…), Claude les ignore et te le signale. Tes coordonnées ne sont pas reprises dans la réponse.
 
@@ -51,11 +54,28 @@ Les sites qui se chargent en JavaScript sont lus via le navigateur quand la sess
 
 Pour les contrats à conditions particulières (V.I.E, alternance, stage, emploi à l'étranger), le skill rappelle les conditions d'éligibilité à partir de [`references/contrats.md`](plugins/carriere/skills/analyse-offre-vs-cv/references/contrats.md), en les vérifiant sur les sites officiels.
 
+### lettre-motivation
+
+Rédige une lettre de motivation personnalisée pour une offre précise.
+
+**Comment ça s'enchaîne** : à la fin de chaque analyse, Claude te propose la lettre pour ce poste. Si tu acceptes, il **reprend le CV que tu as donné au départ** et l'analyse qu'il vient de faire : il ne te redemande rien. Tu peux aussi lancer le skill seul ; s'il n'a pas encore de CV, il te le demande en PDF ou en DOCX.
+
+**Ce que fait la lettre** :
+- elle est écrite **dans la langue de l'offre**, aux usages du pays (lettre française avec objet et formule de politesse, ou cover letter en anglais) ;
+- elle met en avant 2 ou 3 réalisations de ton CV qui répondent aux missions, avec leurs chiffres, et reprend les mots-clés de l'offre ;
+- elle tient sur une page (250 à 350 mots de corps) ;
+- **elle n'invente rien** : chaque fait est vérifié contre ton CV avant livraison, et une compétence qui te manque n'est jamais présentée comme acquise ;
+- elle évite les formules creuses (« passionné », « dynamique », « relever de nouveaux défis »).
+
+**Ce que tu reçois** : la lettre sous forme de document modifiable (ou un fichier Word ou Markdown selon ton environnement), avec les choix faits que tu peux vouloir changer, les informations qui manquent (nom du recruteur, motivation personnelle) et une proposition de version courte pour un formulaire en ligne ou de version dans l'autre langue.
+
+**Commande** : `/lettre-motivation`, sans argument pour reprendre l'offre et le CV de la conversation, ou `/lettre-motivation https://… ./mon-cv.pdf`.
+
 ## Autres installations
 
-**Claude Code, sans marketplace** : copier `plugins/carriere/skills/analyse-offre-vs-cv/` dans `~/.claude/skills/`, ou charger le plugin en local avec `claude --plugin-dir ./plugins/carriere`.
+**Claude Code, sans marketplace** : copier les dossiers `plugins/carriere/skills/analyse-offre-vs-cv/` et `plugins/carriere/skills/lettre-motivation/` dans `~/.claude/skills/`, ou charger le plugin en local avec `claude --plugin-dir ./plugins/carriere`.
 
-**Claude (claude.ai / app)** : zipper le dossier `analyse-offre-vs-cv` et l'importer dans Paramètres → Capacités → Skills.
+**Claude (claude.ai / app)** : zipper chacun des deux dossiers et les importer dans Paramètres → Capacités → Skills.
 
 ## Philosophie
 
