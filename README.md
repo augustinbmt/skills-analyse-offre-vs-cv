@@ -6,7 +6,7 @@ Skills Claude orientés carrière et recherche d'emploi. Chaque skill guide Clau
 
 ```bash
 # Ajouter le marketplace (une seule fois)
-/plugin marketplace add GITHUB_USER/skills-analyse-offre-vs-cv
+/plugin marketplace add augustinbmt/skills-analyse-offre-vs-cv
 
 # Installer le plugin
 /plugin install carriere@augustin-skills
