@@ -92,4 +92,15 @@ Pour un contrat à conditions particulières (V.I.E, alternance, stage, emploi �
 - Ne jamais conseiller d'inventer de l'expérience. Le CV peut être reformulé, pas falsifié.
 - Paraphraser l'offre plutôt que la recopier.
 - Ne pas reprendre dans la réponse les coordonnées du CV (téléphone, adresse, email) : elles ne servent pas l'analyse.
-- Finir en proposant **une lettre de motivation personnalisée** pour l'offre, rédigée à partir du même CV : « Tu veux que je rédige la lettre de motivation pour ce poste, à partir de ton CV ? ». Si le score est sous 40 %, proposer plutôt la lettre pour l'offre la mieux notée, ou d'abord le plan d'action. Si l'utilisateur accepte, charger le skill `lettre-motivation` : il réutilise le CV et l'analyse sans rien redemander.
+
+## 5. Proposer la lettre de motivation
+
+Terminer l'analyse en proposant une lettre de motivation pour l'offre, avec le **brief de lettre pré-rempli** à partir du même CV et de l'offre. Le brief et ses règles de pré-remplissage sont dans le skill `lettre-motivation`, à l'étape 2 : le charger pour l'afficher à l'identique.
+
+- Introduire le brief en une phrase : « Si tu veux une lettre de motivation pour ce poste, voici le brief que j'ai pré-rempli avec ton CV et l'offre. »
+- Afficher le brief pré-rempli, avec « Ce qui m'attire dans cette entreprise » à compléter et 2 ou 3 pistes tirées de l'offre.
+- Finir par : « Corrige ce qui ne va pas et complète "Ce qui m'attire", ou réponds "ok" pour que je rédige la lettre. »
+- **Score sous 40 %** : ne pas afficher le brief. Proposer plutôt de commencer par le plan d'action, ou de faire la lettre pour une offre mieux notée.
+- **Plusieurs offres analysées** : afficher le brief seulement pour l'offre la mieux notée, et proposer les autres en une ligne.
+
+Quand l'utilisateur répond, suivre le skill `lettre-motivation` à partir de l'étape 3 : il réutilise le CV, l'analyse et le brief validé sans rien redemander.
