@@ -29,7 +29,8 @@ SESSION.md
 
 # Données personnelles : ne jamais commiter de CV.
 # Les PDF et DOCX sont bloqués partout, sauf dans les dossiers assets/,
-# templates/ et examples/ des skills (modèles et exemples anonymisés).
+# templates/ et examples/ des skills (modèles et exemples anonymisés)
+# et dans evals/fixtures/ (CV fictifs de test).
 *.pdf
 *.docx
 !plugins/**/assets/**/*.pdf
@@ -38,3 +39,8 @@ SESSION.md
 !plugins/**/templates/**/*.docx
 !plugins/**/examples/**/*.pdf
 !plugins/**/examples/**/*.docx
+!plugins/**/evals/fixtures/*.pdf
+!plugins/**/evals/fixtures/*.docx
+
+# Résultats des evals (générés à chaque lancement)
+plugins/**/evals/results/

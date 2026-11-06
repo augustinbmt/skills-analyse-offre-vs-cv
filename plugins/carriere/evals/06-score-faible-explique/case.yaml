@@ -1,0 +1,28 @@
+schema_version: "1.0"
+name: 06-score-faible-explique
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Mon CV : cv-propre.pdf (dossier courant). Est-ce que je peux postuler à cette offre ?
+
+    Ingénieur DevOps senior (H/F) — Nuage Atlantique — Nantes — CDI
+    Date limite de candidature : 15 décembre 2026.
+    Missions : concevoir et maintenir nos clusters Kubernetes sur AWS, automatiser l'infrastructure avec Terraform, mettre en place la CI/CD (GitLab CI), assurer l'astreinte de production.
+    Profil : diplôme d'ingénieur en informatique ; 5 ans d'expérience DevOps ; maîtrise de Kubernetes, Terraform et AWS ; scripts Python ou Go ; certification AWS appréciée ; anglais technique.
+  max_turns: 40
+  timeout_seconds: 900
+  allowed_tools: ["Skill", "Read", "Glob", "Grep", "Bash", "WebSearch"]
+runs: 3
+graders:
+  - type: "regex"
+    name: "explique-l-absence-de-lettre"
+    pattern: "Pourquoi je ne te propose pas de lettre"
+    match: "contains"
+  - type: "regex"
+    name: "brief-non-affiche"
+    pattern: "Poste visé :"
+    match: "not_contains"
+  - type: "llm"
+    name: "explication-utile"
+    criteria: "PASS si : le score est inférieur à 40 % ; la réponse nomme les prérequis obligatoires manquants (Kubernetes, Terraform, AWS, expérience DevOps) ; elle explique qu'une lettre ne peut pas remplacer un prérequis obligatoire absent ; elle propose des options (plan d'action, autre offre, ou lettre quand même) sans en imposer une."

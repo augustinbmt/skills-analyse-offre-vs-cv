@@ -201,6 +201,46 @@ PY
   done <<< "$out"
 }
 
+# Les copies du brief de lettre doivent rester identiques au modèle canonique.
+lint_brief_sync() {
+  local canon="plugins/carriere/skills/lettre-motivation/SKILL.md"
+  local copy="plugins/carriere/skills/analyse-offre-vs-cv/references/brief-lettre.md"
+  [ -f "$canon" ] && [ -f "$copy" ] || return 0
+  echo ""
+  echo "Brief de lettre : $copy"
+  local out
+  out=$(python3 - "$canon" "$copy" <<'PY'
+import re, sys
+def tpl(p):
+    m = re.search(r"```\n(Poste visé.*?)```", open(p, encoding="utf-8").read(), re.S)
+    return m.group(1) if m else None
+a, b = tpl(sys.argv[1]), tpl(sys.argv[2])
+if a is None or b is None:
+    print("ERR modèle de brief introuvable dans l'un des deux fichiers")
+elif a != b:
+    print("ERR le brief diffère du modèle de lettre-motivation/SKILL.md : recopier le modèle")
+else:
+    print("OK identique au modèle de lettre-motivation")
+PY
+)
+  case "$out" in
+    OK*)  pass "${out#OK }" ;;
+    *)    error "${out#ERR }" ;;
+  esac
+}
+
+lint_plugin_versions() {
+  local pj
+  while IFS= read -r pj; do
+    [ -z "$pj" ] && continue
+    if python3 -c "import json,sys; sys.exit(0 if json.load(open(sys.argv[1])).get('version') else 1)" "$pj"; then
+      pass "version présente : $pj"
+    else
+      warn "pas de champ version dans $pj (les mises à jour ne seront pas visibles)"
+    fi
+  done < <(find . -path '*/plugins/*/.claude-plugin/plugin.json' -not -path './.git/*' | sort)
+}
+
 echo "skill-lint — vérification des skills Claude"
 echo "==========================================="
 
@@ -226,6 +266,12 @@ for f in "${FILES[@]+"${FILES[@]}"}"; do lint_skill "$f"; done
 while IFS= read -r c; do lint_command "$c"; done < <(find . -path '*/plugins/*/commands/*.md' -type f -not -path './.git/*' | sort)
 
 lint_marketplace
+
+lint_brief_sync
+
+echo ""
+echo "Versions des plugins"
+lint_plugin_versions
 
 echo ""
 echo "${#FILES[@]} skill(s) vérifié(s) : $ERRORS erreur(s), $WARNINGS alerte(s)"

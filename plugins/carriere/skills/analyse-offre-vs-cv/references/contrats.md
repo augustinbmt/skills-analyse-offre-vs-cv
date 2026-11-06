@@ -1,5 +1,7 @@
 # Conditions par type de contrat
 
+**Dernière vérification des sources : 6 novembre 2026.** Au-delà de 6 mois, considérer ces règles comme à revérifier en priorité.
+
 Points d'éligibilité à signaler selon le contrat de l'offre. Ces règles changent : **vérifier chaque condition sur le site officiel indiqué avant de l'affirmer**, et dire à l'utilisateur d'où vient l'information. Ne signaler que ce qui peut bloquer ou surprendre le candidat.
 
 ## V.I.E (Volontariat International en Entreprise) — France

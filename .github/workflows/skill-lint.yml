@@ -1,29 +1,34 @@
-name: Lint des skills
+name: Vérifications
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'plugins/**'
-      - '.claude-plugin/**'
-      - 'bin/skill-lint'
   pull_request:
-    paths:
-      - 'plugins/**'
-      - '.claude-plugin/**'
-      - 'bin/skill-lint'
 
 jobs:
-  lint:
+  verifier:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Vérifier les fichiers JSON
-        run: |
-          for f in .claude-plugin/*.json plugins/*/.claude-plugin/plugin.json; do
-            python3 -m json.tool "$f" > /dev/null && echo "OK $f"
-          done
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-      - name: Lancer skill-lint
+      - name: Installer les dépendances du détecteur
+        run: pip install pypdf python-docx
+
+      - name: Vérifier les skills, le marketplace et le brief (skill-lint)
         run: ./bin/skill-lint plugins
+
+      - name: Tester le détecteur de texte caché sur les CV piégés
+        run: ./bin/test-detecteur
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validation officielle Claude Code (stricte)
+        run: |
+          npx -y @anthropic-ai/claude-code plugin validate --strict .
+          npx -y @anthropic-ai/claude-code plugin validate --strict plugins/carriere

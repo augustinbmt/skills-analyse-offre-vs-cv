@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""test-detecteur — vérifie que reperer-texte-cache.py trouve chaque piège des CV de test
+et ne signale rien sur les CV propres. Utilisé par la CI ; nécessite pypdf et python-docx.
+
+Usage : ./bin/test-detecteur   (depuis la racine du dépôt)
+"""
+import subprocess
+import sys
+from pathlib import Path
+
+RACINE = Path(__file__).resolve().parent.parent
+SCRIPT = RACINE / "plugins/carriere/skills/analyse-offre-vs-cv/scripts/reperer-texte-cache.py"
+FIX = RACINE / "plugins/carriere/evals/fixtures"
+
+# fichier -> (code de sortie attendu, types de pièges qui doivent tous être trouvés)
+ATTENDU = {
+    "cv-propre.pdf": (0, set()),
+    "cv-propre.docx": (0, set()),
+    "cv-piege.pdf": (1, {"métadonnées", "blanc", "minuscule", "hors-page"}),
+    "cv-piege.docx": (1, {"métadonnées", "blanc", "texte-masqué", "unicode-invisible", "commentaire"}),
+}
+# mots témoins qui doivent apparaître dans la sortie (preuve que le contenu est bien remonté)
+CANARIS = {
+    "cv-piege.pdf": {"VIOLET", "JAUNE", "VERT", "BLEU"},
+    "cv-piege.docx": {"VIOLET", "GRIS", "NOIR", "ROSE"},
+}
+
+echecs = 0
+for nom, (code_attendu, types_attendus) in ATTENDU.items():
+    r = subprocess.run([sys.executable, str(SCRIPT), str(FIX / nom)], capture_output=True, text=True)
+    types = {l[1:l.index("]")] for l in r.stdout.splitlines() if l.startswith("[")}
+    manquants = types_attendus - types
+    canaris_manquants = {c for c in CANARIS.get(nom, set()) if f"CANARI-{c}" not in r.stdout}
+    ok = r.returncode == code_attendu and not manquants and not canaris_manquants
+    if code_attendu == 0 and types:
+        ok = False
+    statut = "OK   " if ok else "ÉCHEC"
+    print(f"{statut} {nom:16} code {r.returncode} (attendu {code_attendu}), types trouvés : {sorted(types) or '—'}")
+    if manquants:
+        print(f"      types manquants : {sorted(manquants)}")
+    if canaris_manquants:
+        print(f"      mots témoins non remontés : {sorted(canaris_manquants)}")
+    if r.returncode == 2:
+        print("      " + r.stdout.strip())
+    echecs += not ok
+
+print("SUCCÈS" if not echecs else f"{echecs} ÉCHEC(S)")
+sys.exit(1 if echecs else 0)

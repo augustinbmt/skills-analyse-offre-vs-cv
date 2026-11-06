@@ -1,0 +1,19 @@
+schema_version: "1.0"
+name: 08-ne-doit-pas-se-declencher
+execution:
+  prompt: |
+    Quelle est la différence entre une période d'essai en CDD et en CDI ? Réponds en quelques lignes.
+  max_turns: 5
+  timeout_seconds: 180
+  allowed_tools: ["Skill", "WebSearch"]
+runs: 3
+graders:
+  - type: "tool_used"
+    name: "skill-non-declenche"
+    tool: "Skill"
+    min: 0
+    max: 0
+    arm: "both"
+  - type: "llm"
+    name: "repond-a-la-question"
+    criteria: "PASS si la réponse explique la différence de période d'essai entre CDD et CDI, sans score, sans tableau d'adéquation et sans demander de CV."

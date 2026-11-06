@@ -1,5 +1,6 @@
 {
   "name": "carriere",
+  "version": "1.0.0",
   "description": "Analyse d'une offre d'emploi face à un CV (prérequis, score pondéré, plan pour combler les manques) et lettre de motivation personnalisée.",
   "author": {
     "name": "Augustin Beaumont",
