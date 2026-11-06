@@ -27,6 +27,14 @@ SESSION.md
 *.skill
 *.zip
 
-# Données personnelles : ne jamais commiter de CV
+# Données personnelles : ne jamais commiter de CV.
+# Les PDF et DOCX sont bloqués partout, sauf dans les dossiers assets/,
+# templates/ et examples/ des skills (modèles et exemples anonymisés).
 *.pdf
 *.docx
+!plugins/**/assets/**/*.pdf
+!plugins/**/assets/**/*.docx
+!plugins/**/templates/**/*.pdf
+!plugins/**/templates/**/*.docx
+!plugins/**/examples/**/*.pdf
+!plugins/**/examples/**/*.docx

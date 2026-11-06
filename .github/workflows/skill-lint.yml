@@ -4,12 +4,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'plugins/**/skills/**'
+      - 'plugins/**'
       - '.claude-plugin/**'
       - 'bin/skill-lint'
   pull_request:
     paths:
-      - 'plugins/**/skills/**'
+      - 'plugins/**'
       - '.claude-plugin/**'
       - 'bin/skill-lint'
 

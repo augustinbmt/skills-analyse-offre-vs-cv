@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# skill-lint — vérifie la structure des SKILL.md
+# skill-lint — vérifie la structure des skills, des commandes et du marketplace
 # Usage : skill-lint [chemin...]
 #   chemin : dossier(s) de skill, fichier(s) SKILL.md ou dossier parent.
 #   Sans argument : tous les SKILL.md sous le dossier courant.
-# Code de sortie : 0 si tout passe, 1 sinon.
+# Si .claude-plugin/marketplace.json existe à la racine, il est vérifié aussi.
+# Code de sortie : 0 si tout passe, 1 sinon. Nécessite python3.
 
 set -euo pipefail
 
@@ -22,6 +23,40 @@ error() { red    "  ERREUR : $1"; ERRORS=$((ERRORS + 1)); }
 warn()  { yellow "  ALERTE : $1"; WARNINGS=$((WARNINGS + 1)); }
 pass()  { dim    "  OK     : $1"; }
 
+# Lit un champ du frontmatter YAML, y compris sur plusieurs lignes (> ou |).
+# Affiche la valeur sur une ligne, espaces normalisés.
+fm_field() {
+  python3 - "$1" "$2" <<'PY'
+import re, sys
+path, key = sys.argv[1], sys.argv[2]
+lines = open(path, encoding="utf-8").read().split("\n")
+if not lines or lines[0].strip() != "---":
+    sys.exit(0)
+try:
+    end = lines.index("---", 1)
+except ValueError:
+    sys.exit(0)
+fm = lines[1:end]
+for i, line in enumerate(fm):
+    m = re.match(rf"^{re.escape(key)}:\s*(.*)$", line)
+    if not m:
+        continue
+    val = m.group(1).strip()
+    if val in (">", "|", ">-", "|-", ">+", "|+", ""):
+        parts = []
+        for nxt in fm[i + 1:]:
+            if nxt.startswith((" ", "\t")) or nxt == "":
+                parts.append(nxt.strip())
+            else:
+                break
+        val = " ".join(p for p in parts if p)
+    if len(val) >= 2 and val[0] == val[-1] and val[0] in "\"'":
+        val = val[1:-1]
+    print(" ".join(val.split()))
+    break
+PY
+}
+
 lint_skill() {
   local skill_md="$1"
   local skill_dir skill_name
@@ -29,7 +64,7 @@ lint_skill() {
   skill_name=$(basename "$skill_dir")
 
   echo ""
-  echo "Analyse : $skill_md"
+  echo "Skill : $skill_md"
 
   if [ ! -s "$skill_md" ]; then error "SKILL.md est vide"; return; fi
 
@@ -42,54 +77,51 @@ lint_skill() {
   if [ -z "$fm_end" ]; then error "Frontmatter jamais refermé par '---'"; return; fi
   pass "frontmatter valide"
 
-  local fm
-  fm=$(sed -n "2,${fm_end}p" "$skill_md")
-
   # name
   local name
-  name=$(echo "$fm" | grep -E '^name:' | sed 's/^name:[[:space:]]*//' | tr -d "\"'" || true)
+  name=$(fm_field "$skill_md" name)
   if [ -z "$name" ]; then
     error "champ 'name' absent ou vide"
   else
     [ "$name" = "$skill_name" ] && pass "name identique au dossier" \
       || warn "name '$name' différent du dossier '$skill_name'"
-    echo "$name" | grep -qE '^[a-z0-9]+(-[a-z0-9]+)*$' && pass "name en kebab-case" \
-      || error "name '$name' n'est pas en kebab-case"
+    if echo "$name" | grep -qE '^[a-z0-9]+(-[a-z0-9]+)*$'; then pass "name en kebab-case"
+    else error "name '$name' n'est pas en kebab-case"; fi
     [ "${#name}" -le "$MAX_NAME" ] || error "name dépasse $MAX_NAME caractères"
   fi
 
-  # description
+  # description (une ligne ou plusieurs)
   local desc
-  desc=$(echo "$fm" | grep -E '^description:' | sed 's/^description:[[:space:]]*//' || true)
+  desc=$(fm_field "$skill_md" description)
   if [ -z "$desc" ]; then
     error "champ 'description' absent ou vide"
   else
     pass "description présente"
     local desc_len
     desc_len=$(printf '%s' "$desc" | wc -m | tr -d '[:space:]')
-    [ "$desc_len" -le "$MAX_DESC" ] && pass "description : $desc_len caractères (max $MAX_DESC)" \
-      || error "description : $desc_len caractères (max $MAX_DESC)"
-    if echo "$desc" | grep -q '[<>]'; then error "description contient des chevrons < ou >"; fi
+    if [ "$desc_len" -le "$MAX_DESC" ]; then pass "description : $desc_len caractères (max $MAX_DESC)"
+    else error "description : $desc_len caractères (max $MAX_DESC)"; fi
+    if printf '%s' "$desc" | grep -q '[<>]'; then error "description contient des chevrons < ou >"; fi
   fi
 
   # longueur
   local lines
   lines=$(wc -l < "$skill_md" | tr -d '[:space:]')
-  [ "$lines" -le "$MAX_LINES" ] && pass "$lines lignes (max $MAX_LINES)" \
-    || error "$lines lignes (max $MAX_LINES)"
+  if [ "$lines" -le "$MAX_LINES" ]; then pass "$lines lignes (max $MAX_LINES)"
+  else error "$lines lignes (max $MAX_LINES)"; fi
 
   # corps non vide
   local body
   body=$(tail -n +"$((fm_end + 2))" "$skill_md" | tr -d '[:space:]')
   [ -n "$body" ] && pass "corps présent" || warn "aucun contenu après le frontmatter"
 
-  # références vers des fichiers inexistants
+  # références vers des fichiers du skill (avec ou sans ./)
   local refs
-  refs=$(grep -oE '\./(references|assets|scripts)/[^ )"`]+' "$skill_md" || true)
+  refs=$(grep -oE '(\./)?(references|assets|scripts|templates|examples)/[A-Za-z0-9._/-]+' "$skill_md" | sed 's#^\./##' | sort -u || true)
   while IFS= read -r ref; do
     [ -z "$ref" ] && continue
-    [ -e "$skill_dir/$ref" ] && pass "référence '$ref' trouvée" \
-      || error "référence '$ref' introuvable"
+    if [ -e "$skill_dir/$ref" ]; then pass "référence '$ref' trouvée"
+    else error "référence '$ref' introuvable"; fi
   done <<< "$refs"
 
   # dossiers non standard
@@ -101,8 +133,78 @@ lint_skill() {
              ! -name references ! -name assets ! -name scripts ! -name templates ! -name examples)
 }
 
+lint_command() {
+  local cmd="$1"
+  echo ""
+  echo "Commande : $cmd"
+  if [ "$(head -1 "$cmd")" != "---" ]; then warn "pas de frontmatter (description conseillée)"; return; fi
+  local desc
+  desc=$(fm_field "$cmd" description)
+  if [ -n "$desc" ]; then pass "description présente"; else warn "description absente"; fi
+  # le skill appelé par la commande doit exister dans le même plugin
+  local plugin_dir skill
+  plugin_dir=$(dirname "$(dirname "$cmd")")
+  while IFS= read -r skill; do
+    [ -z "$skill" ] && continue
+    if [ -f "$plugin_dir/skills/$skill/SKILL.md" ]; then pass "skill '$skill' trouvé"
+    else error "skill '$skill' introuvable dans $plugin_dir/skills/"; fi
+  done < <(grep -oE 'skill `[a-z0-9-]+`' "$cmd" | sed 's/skill `//; s/`//' | sort -u)
+}
+
+lint_marketplace() {
+  local mp=".claude-plugin/marketplace.json"
+  [ -f "$mp" ] || return 0
+  echo ""
+  echo "Marketplace : $mp"
+  local out
+  if ! out=$(python3 - "$mp" <<'PY'
+import json, os, sys
+mp = sys.argv[1]
+data = json.load(open(mp, encoding="utf-8"))
+problems = []
+for key in ("name", "owner", "plugins"):
+    if key not in data:
+        problems.append(f"champ '{key}' absent")
+for p in data.get("plugins", []):
+    name, src = p.get("name"), p.get("source", "")
+    if not name:
+        problems.append("un plugin n'a pas de 'name'")
+        continue
+    if not src.startswith("./"):
+        print(f"SKIP {name} (source externe)")
+        continue
+    pj = os.path.join(src, ".claude-plugin", "plugin.json")
+    if not os.path.isdir(src):
+        problems.append(f"{name} : dossier {src} introuvable")
+    elif not os.path.isfile(pj):
+        problems.append(f"{name} : {pj} introuvable")
+    else:
+        pdata = json.load(open(pj, encoding="utf-8"))
+        if pdata.get("name") != name:
+            problems.append(f"{name} : plugin.json a le nom '{pdata.get('name')}'")
+        else:
+            print(f"OK {name} -> {src}")
+for line in problems:
+    print("ERR " + line)
+sys.exit(1 if problems else 0)
+PY
+  ); then
+    :
+  fi
+  while IFS= read -r line; do
+    case "$line" in
+      OK*)   pass "plugin ${line#OK }" ;;
+      SKIP*) dim  "  --     : ${line#SKIP }" ;;
+      ERR*)  error "${line#ERR }" ;;
+      *)     [ -n "$line" ] && error "$line" ;;
+    esac
+  done <<< "$out"
+}
+
 echo "skill-lint — vérification des skills Claude"
 echo "==========================================="
+
+if ! command -v python3 > /dev/null; then red "python3 est requis"; exit 1; fi
 
 FILES=()
 if [ $# -eq 0 ]; then
@@ -119,9 +221,11 @@ else
   done
 fi
 
-if [ ${#FILES[@]} -eq 0 ]; then yellow "Aucun SKILL.md trouvé."; exit 0; fi
+for f in "${FILES[@]+"${FILES[@]}"}"; do lint_skill "$f"; done
 
-for f in "${FILES[@]}"; do lint_skill "$f"; done
+while IFS= read -r c; do lint_command "$c"; done < <(find . -path '*/plugins/*/commands/*.md' -type f -not -path './.git/*' | sort)
+
+lint_marketplace
 
 echo ""
 echo "${#FILES[@]} skill(s) vérifié(s) : $ERRORS erreur(s), $WARNINGS alerte(s)"

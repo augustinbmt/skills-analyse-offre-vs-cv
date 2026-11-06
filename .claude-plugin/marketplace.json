@@ -3,8 +3,7 @@
   "name": "augustin-skills",
   "description": "Skills Claude orientés carrière et recherche d'emploi — chacun produit un livrable concret",
   "owner": {
-    "name": "Augustin Beaumont",
-    "url": "https://github.com/augustinbmt"
+    "name": "Augustin Beaumont"
   },
   "plugins": [
     {
