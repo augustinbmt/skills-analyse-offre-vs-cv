@@ -59,7 +59,7 @@ Augmenter `version` dans `plugins/<plugin>/.claude-plugin/plugin.json` à chaque
 
 Avant de commiter un skill :
 - `./bin/skill-lint` passe sans erreur ;
-- `./bin/test-detecteur` passe (détecteur de texte caché, nécessite `pypdf` et `python-docx`) ;
+- `./bin/test-detecteur` passe (détecteur de texte caché dans ses trois modes ; nécessite `pypdf`, et `poppler` + `tesseract` pour le mode OCR) ;
 - `claude plugin validate --strict .` et `claude plugin validate --strict plugins/<plugin>` passent ;
 - après un changement de comportement, les evals tournent : `claude plugin eval ./plugins/<plugin> --scaffold --allow-tools Bash WebSearch` ;
 - il produit un livrable concret ;

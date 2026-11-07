@@ -1,48 +1,102 @@
 #!/usr/bin/env python3
-"""test-detecteur — vérifie que reperer-texte-cache.py trouve chaque piège des CV de test
-et ne signale rien sur les CV propres. Utilisé par la CI ; nécessite pypdf et python-docx.
+"""test-detecteur — vérifie reperer-texte-cache.py sur les CV de test, dans tous ses modes.
 
-Usage : ./bin/test-detecteur   (depuis la racine du dépôt)
+Pour chaque cas : le code de sortie, les mots témoins qui DOIVENT être trouvés (pièges
+cachés) et ceux qui ne doivent PAS l'être (injections visibles, que le détecteur n'a pas
+à signaler : c'est le rôle de la lecture). Les CV propres ne doivent rien déclencher.
+
+Modes testés :
+  - PDF, méthode OCR (pdftoppm + tesseract + pypdf) ;
+  - PDF, méthode de secours (OCR retiré du PATH) ;
+  - DOCX (bibliothèque standard seulement).
+
+Usage : ./bin/test-detecteur   (depuis n'importe où)
+Nécessite : pypdf ; pour le mode OCR : poppler-utils et tesseract (fra).
+En CI (variable CI définie), l'absence de l'OCR est une erreur ; en local, ces cas sont sautés.
 """
+import os
+import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 RACINE = Path(__file__).resolve().parent.parent
 SCRIPT = RACINE / "plugins/carriere/skills/analyse-offre-vs-cv/scripts/reperer-texte-cache.py"
 FIX = RACINE / "plugins/carriere/evals/fixtures"
 
-# fichier -> (code de sortie attendu, types de pièges qui doivent tous être trouvés)
-ATTENDU = {
-    "cv-propre.pdf": (0, set()),
-    "cv-propre.docx": (0, set()),
-    "cv-piege.pdf": (1, {"métadonnées", "blanc", "minuscule", "hors-page"}),
-    "cv-piege.docx": (1, {"métadonnées", "blanc", "texte-masqué", "unicode-invisible", "commentaire"}),
-}
-# mots témoins qui doivent apparaître dans la sortie (preuve que le contenu est bien remonté)
-CANARIS = {
-    "cv-piege.pdf": {"VIOLET", "JAUNE", "VERT", "BLEU"},
-    "cv-piege.docx": {"VIOLET", "GRIS", "NOIR", "ROSE"},
-}
+VISIBLES = {"ROUGE", "ORANGE"}
+PIEGES_PDF = {"VIOLET", "JAUNE", "VERT", "BLEU", "CYAN", "BEIGE", "OR", "BRUN"}
+PIEGES_DOCX = {"VIOLET", "SABLE", "JAUNE", "GRIS", "TURQUOISE", "CORAIL", "INDIGO", "OLIVE", "MAUVE", "NOIR", "ROSE"}
 
-echecs = 0
-for nom, (code_attendu, types_attendus) in ATTENDU.items():
-    r = subprocess.run([sys.executable, str(SCRIPT), str(FIX / nom)], capture_output=True, text=True)
-    types = {l[1:l.index("]")] for l in r.stdout.splitlines() if l.startswith("[")}
-    manquants = types_attendus - types
-    canaris_manquants = {c for c in CANARIS.get(nom, set()) if f"CANARI-{c}" not in r.stdout}
-    ok = r.returncode == code_attendu and not manquants and not canaris_manquants
-    if code_attendu == 0 and types:
-        ok = False
-    statut = "OK   " if ok else "ÉCHEC"
-    print(f"{statut} {nom:16} code {r.returncode} (attendu {code_attendu}), types trouvés : {sorted(types) or '—'}")
-    if manquants:
-        print(f"      types manquants : {sorted(manquants)}")
-    if canaris_manquants:
-        print(f"      mots témoins non remontés : {sorted(canaris_manquants)}")
-    if r.returncode == 2:
-        print("      " + r.stdout.strip())
-    echecs += not ok
+# (libellé, fichier, mode, codes acceptés, témoins attendus, témoins interdits)
+CAS = [
+    ("PDF propre, OCR", "cv-propre.pdf", "ocr", {0}, set(), set()),
+    ("PDF piégé, OCR", "cv-piege.pdf", "ocr", {1}, PIEGES_PDF, VISIBLES),
+    ("PDF propre, secours", "cv-propre.pdf", "secours", {2}, set(), set()),
+    ("PDF piégé, secours", "cv-piege.pdf", "secours", {1}, PIEGES_PDF - {"BRUN"}, VISIBLES),
+    ("DOCX propre", "cv-propre.docx", "normal", {0}, set(), set()),
+    ("DOCX piégé", "cv-piege.docx", "normal", {1}, PIEGES_DOCX, VISIBLES),
+]
 
-print("SUCCÈS" if not echecs else f"{echecs} ÉCHEC(S)")
-sys.exit(1 if echecs else 0)
+
+def env_sans_ocr(dossier):
+    """PATH ne contenant que python3, pdftotext et pdfinfo : ni pdftoppm ni tesseract."""
+    bin_ = Path(dossier) / "bin"
+    bin_.mkdir()
+    for outil in ("pdftotext", "pdfinfo"):
+        chemin = shutil.which(outil)
+        if chemin:
+            os.symlink(chemin, bin_ / outil)
+    os.symlink(sys.executable, bin_ / "python3")
+    env = dict(os.environ)
+    env["PATH"] = str(bin_)
+    return env
+
+
+def main():
+    ocr_dispo = all(shutil.which(o) for o in ("pdftoppm", "tesseract"))
+    en_ci = bool(os.environ.get("CI"))
+    echecs = sautes = 0
+    with tempfile.TemporaryDirectory() as tmp:
+        env_secours = env_sans_ocr(tmp)
+        for libelle, fichier, mode, codes, attendus, interdits in CAS:
+            if mode == "ocr" and not ocr_dispo:
+                if en_ci:
+                    print(f"ÉCHEC {libelle:22} pdftoppm ou tesseract absent en CI")
+                    echecs += 1
+                else:
+                    print(f"SAUTÉ {libelle:22} (installer poppler et tesseract pour ce cas)")
+                    sautes += 1
+                continue
+            env = env_secours if mode == "secours" else None
+            r = subprocess.run([sys.executable, str(SCRIPT), str(FIX / fichier)],
+                               capture_output=True, text=True, env=env, timeout=600)
+            signalements = [l for l in r.stdout.splitlines() if l.startswith("[") and not l.startswith("[info]")]
+            trouves = set(re.findall(r"CANARI-([A-Z]+)", "\n".join(signalements)))
+            manquants = attendus - trouves
+            en_trop = trouves & interdits
+            faux_positifs = signalements if not attendus else []
+            ok = r.returncode in codes and not manquants and not en_trop and not faux_positifs
+            statut = "OK   " if ok else "ÉCHEC"
+            detail = f"{len(attendus & trouves)}/{len(attendus)} pièges" if attendus else f"{len(signalements)} signalement(s)"
+            print(f"{statut} {libelle:22} code {r.returncode} ; {detail}")
+            if r.returncode not in codes:
+                print(f"      code attendu : {sorted(codes)}")
+            if manquants:
+                print(f"      pièges non trouvés : {sorted(manquants)}")
+            if en_trop:
+                print(f"      injections visibles signalées comme cachées : {sorted(en_trop)}")
+            for fp in faux_positifs:
+                print(f"      faux positif : {fp[:160]}")
+            if r.returncode == 2 and not ok:
+                print("      " + r.stdout.strip().replace("\n", "\n      "))
+            echecs += not ok
+    bilan = "SUCCÈS" if not echecs else f"{echecs} ÉCHEC(S)"
+    print(bilan + (f" ({sautes} cas sautés)" if sautes else ""))
+    return 1 if echecs else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

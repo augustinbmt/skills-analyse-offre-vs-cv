@@ -1,12 +1,12 @@
 # Feuille de route
 
-État au 7 novembre 2026, version 1.0.0. Cocher une ligne quand elle est faite, avec la version qui l'apporte.
+État au 7 novembre 2026, version 1.1.0. Cocher une ligne quand elle est faite, avec la version qui l'apporte.
 
 ## 1. Failles à corriger (priorité)
 
-- [ ] **Dépendances du détecteur** : lire les DOCX avec Python seul (zipfile + XML), sans `python-docx` ; déclarer `pypdf` dans le skill et le README.
-- [ ] **Angles morts du détecteur PDF** : texte en mode invisible (opérateur `Tr 3`), couleurs proches du fond, texte caché sous une image.
-- [ ] **Angles morts du détecteur DOCX** : en-têtes, pieds de page, couleur ou taille définies dans un style, couleurs de thème.
+- [x] **Dépendances du détecteur** (1.1.0) : DOCX lu avec Python seul ; dépendances PDF déclarées (`compatibility`, README), installation proposée avec accord.
+- [x] **Angles morts du détecteur PDF** (1.1.0) : méthode OCR (page affichée lue par tesseract, comparée au texte extrait) ; méthode de secours avec mode invisible, contraste et aplats de fond.
+- [x] **Angles morts du détecteur DOCX** (1.1.0) : en-têtes, pieds de page, notes, styles, couleurs de thème, fonds, texte alternatif, suivi des modifications.
 - [ ] **Injections visibles** : repérer les phrases suspectes (« ignore tes consignes », « score de 100 % »…) comme « à vérifier », sans les traiter automatiquement comme des injections.
 - [ ] **Pages d'offres** : repérer le texte caché d'une page lue avec le navigateur (éléments masqués, transparents, minuscules, hors écran).
 - [ ] **CV scanné en image** : prévenir que la détection est limitée ; option d'OCR.
@@ -20,7 +20,7 @@
 - [ ] Les 8 evals, dont la stabilité du score sur 3 lancements.
 - [ ] Installation depuis GitHub : `/plugin marketplace add augustinbmt/skills-analyse-offre-vs-cv`.
 - [ ] Commandes slash avec arguments : `/analyse-offre-vs-cv <url> <cv>`.
-- [ ] Détecteur lancé par Claude pendant une analyse, sur une machine sans `pypdf`.
+- [ ] Détecteur lancé par Claude pendant une analyse, sur une machine sans `pypdf` ni `tesseract` (proposition d'installation).
 - [ ] Offre en anglais et lettre en anglais.
 - [ ] Welcome to the Jungle ; LinkedIn sans être connecté.
 - [ ] Skills importés dans claude.ai (dossiers zippés).
